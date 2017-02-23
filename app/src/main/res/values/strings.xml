@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">WechatFingerprint</string>
+    <string name="xposedDescription">wechat fingerorint</string>
 </resources>

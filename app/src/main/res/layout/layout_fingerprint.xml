@@ -1,41 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     >
 
-    <FrameLayout
-        android:id="@+id/layout_keyboard"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
-
     <RelativeLayout
         android:id="@+id/layout_fingerprint"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="30dp"
+        android:background="#F9F9F9"
         >
 
-        <ImageView
-            android:id="@+id/ic_fp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:layout_gravity="center"
-            android:src="@drawable/ic_fp_40px"
-            />
-
         <TextView
-            android:id="@+id/tv_info"
+            android:id="@+id/tv_hint"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/ic_fp"
             android:layout_centerInParent="true"
             android:layout_marginTop="8dp"
+            android:textColor="@android:color/holo_red_light"
             tools:text="information"
             />
+
+        <ImageView
+            android:id="@+id/ic_fp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_fp"
+            />
     </RelativeLayout>
+
+    <ImageView
+        android:id="@+id/view_header"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        />
 </FrameLayout>
