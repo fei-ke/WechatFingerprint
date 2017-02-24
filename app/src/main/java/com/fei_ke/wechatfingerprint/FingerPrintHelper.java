@@ -126,6 +126,8 @@ public class FingerPrintHelper extends FingerprintManager.AuthenticationCallback
 
                 Log.i(TAG, "encryptedText: " + encryptedText);
 
+                if (mCallback != null) mCallback.onSuccess(encryptedText);
+
             } catch (IllegalBlockSizeException e) {
                 e.printStackTrace();
             } catch (BadPaddingException e) {
