@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">微信指纹支付</string>
+    <string name="xposedDescription">为微信支付添加指纹支持</string>
+    <string name="auth_success">认证成功</string>
+    <string name="fp_no_match">无匹配</string>
+    <string name="set_psw_success">设置成功</string>
+    <string name="pwd_input_hint">先输入支付密码再录入指纹</string>
+</resources>

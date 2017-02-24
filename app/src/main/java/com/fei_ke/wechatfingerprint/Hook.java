@@ -1,11 +1,15 @@
 package com.fei_ke.wechatfingerprint;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+
+import javax.crypto.Cipher;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
@@ -58,8 +62,11 @@ public class Hook implements IXposedHookLoadPackage {
                     mFingerPrintHelper.setPurpose(FingerPrintHelper.DECRYPT_MODE);
                     mFingerPrintHelper.setCallback(new FingerPrintHelper.Callback() {
                         @Override
-                        public void onSuccess(String value) {
-                            editText.setText(value);
+                        public void onSuccess(int purpose, Cipher cipher) {
+                            String pwd = mFingerPrintHelper.decrypt(cipher);
+                            if (!TextUtils.isEmpty(pwd)) {
+                                editText.setText(pwd);
+                            }
                             fingerPrintLayout.authSuccess();
                         }
 
@@ -84,6 +91,38 @@ public class Hook implements IXposedHookLoadPackage {
                 if (mFingerPrintHelper != null) {
                     mFingerPrintHelper.stopAuthenticate();
                     mFingerPrintHelper = null;
+                }
+            }
+        });
+
+        Class classWalletPasswordSettingUI = XposedHelpers.findClass("com.tencent.mm.plugin.wallet.pwd.ui.WalletPasswordSettingUI", lpparam.classLoader);
+        final Class classPreference = XposedHelpers.findClass("com.tencent.mm.ui.base.preference.Preference", lpparam.classLoader);
+        Class classAdapter = XposedHelpers.findClass("com.tencent.mm.ui.base.preference.f", lpparam.classLoader);
+
+        XposedHelpers.findAndHookMethod(classWalletPasswordSettingUI, "onCreate", Bundle.class, new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                Object thisObject = param.thisObject;
+                Object adapter = XposedHelpers.getObjectField(thisObject, "dzO");
+
+                Object preference = XposedHelpers.newInstance(classPreference, (Context) thisObject);
+                XposedHelpers.callMethod(preference, "setKey", "xposed_wechat_fingerprint");
+                XposedHelpers.callMethod(preference, "setTitle", (CharSequence) "Xposed 指纹支付");
+
+                int index = (int) XposedHelpers.callMethod(adapter, "indexOf", "wallet_open_gesture_password");
+                XposedHelpers.callMethod(adapter, "a", new Class[]{classPreference, int.class}, preference, index);
+            }
+        });
+
+        XposedHelpers.findAndHookMethod(classWalletPasswordSettingUI, "a", classAdapter, classPreference, new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                Object preference = param.args[1];
+                String key = (String) XposedHelpers.getObjectField(preference, "dqE");
+                if ("xposed_wechat_fingerprint".equals(key)) {
+                    Activity activity = (Activity) param.thisObject;
+                    SetPasswordFragment fragment = new SetPasswordFragment();
+                    fragment.show(activity.getFragmentManager(), "dlg");
                 }
             }
         });

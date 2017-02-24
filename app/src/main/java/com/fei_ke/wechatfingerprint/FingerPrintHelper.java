@@ -7,7 +7,6 @@ import android.hardware.fingerprint.FingerprintManager;
 import android.os.CancellationSignal;
 import android.text.TextUtils;
 import android.util.Base64;
-import android.util.Log;
 import android.widget.Toast;
 
 import javax.crypto.BadPaddingException;
@@ -90,73 +89,63 @@ public class FingerPrintHelper extends FingerprintManager.AuthenticationCallback
 
     @Override
     public void onAuthenticationError(int errorCode, CharSequence errString) {
-        super.onAuthenticationError(errorCode, errString);
-
-        if (mCallback != null) mCallback.onFailure(errString);
-
-        Log.d(TAG, "onAuthenticationError() called with: errorCode = [" + errorCode + "], errString = [" + errString + "]");
+        if (mCallback != null) {
+            mCallback.onFailure(errString);
+        }
     }
 
     @Override
     public void onAuthenticationHelp(int helpCode, CharSequence helpString) {
-        super.onAuthenticationHelp(helpCode, helpString);
-
-        if (mCallback != null) mCallback.onFailure(helpString);
-
-        Log.d(TAG, "onAuthenticationHelp() called with: helpCode = [" + helpCode + "], helpString = [" + helpString + "]");
+        if (mCallback != null) {
+            mCallback.onFailure(helpString);
+        }
     }
 
     @Override
     public void onAuthenticationSucceeded(FingerprintManager.AuthenticationResult result) {
-        super.onAuthenticationSucceeded(result);
-        Log.d(TAG, "onAuthenticationSucceeded() called with: result = [" + result + "]");
-
-        final Cipher cipher = result.getCryptoObject().getCipher();
-
-        if (mPurpose == ENCRYPT_MODE) {
-            try {
-                byte[] encrypted = cipher.doFinal("123456".getBytes());
-                byte[] IV = cipher.getIV();
-
-                String encryptedText = Base64.encodeToString(encrypted, Base64.URL_SAFE);
-                String IVText = Base64.encodeToString(IV, Base64.URL_SAFE);
-
-                mLocalSharedPreference.storeData(LocalSharedPreference.KEY_PASSWORD, encryptedText);
-                mLocalSharedPreference.storeData(LocalSharedPreference.KEY_IV, IVText);
-
-                Log.i(TAG, "encryptedText: " + encryptedText);
-
-                if (mCallback != null) mCallback.onSuccess(encryptedText);
-
-            } catch (IllegalBlockSizeException e) {
-                e.printStackTrace();
-            } catch (BadPaddingException e) {
-                e.printStackTrace();
-            }
-        } else {
-            try {
-                String data = mLocalSharedPreference.getData(LocalSharedPreference.KEY_PASSWORD);
-                byte[] decrypted = cipher.doFinal(Base64.decode(data, Base64.URL_SAFE));
-
-                if (mCallback != null) mCallback.onSuccess(new String(decrypted));
-
-            } catch (BadPaddingException | IllegalBlockSizeException e) {
-                e.printStackTrace();
-            }
+        if (mCallback != null) {
+            mCallback.onSuccess(mPurpose, result.getCryptoObject().getCipher());
         }
     }
 
     @Override
     public void onAuthenticationFailed() {
-        super.onAuthenticationFailed();
+        if (mCallback != null) {
+            mCallback.onFailure("No Match");
+        }
+    }
 
-        if (mCallback != null) mCallback.onFailure("No Match");
+    public void encrypt(Cipher cipher, String data) {
+        try {
+            byte[] encrypted = cipher.doFinal(data.getBytes());
+            byte[] IV = cipher.getIV();
 
-        Log.d(TAG, "onAuthenticationFailed() called");
+            String encryptedText = Base64.encodeToString(encrypted, Base64.URL_SAFE);
+            String IVText = Base64.encodeToString(IV, Base64.URL_SAFE);
+
+            mLocalSharedPreference.storeData(LocalSharedPreference.KEY_PASSWORD, encryptedText);
+            mLocalSharedPreference.storeData(LocalSharedPreference.KEY_IV, IVText);
+
+        } catch (IllegalBlockSizeException | BadPaddingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String decrypt(Cipher cipher) {
+        try {
+            String data = mLocalSharedPreference.getData(LocalSharedPreference.KEY_PASSWORD);
+
+            byte[] decrypted = cipher.doFinal(Base64.decode(data, Base64.URL_SAFE));
+
+            return new String(decrypted);
+
+        } catch (BadPaddingException | IllegalBlockSizeException e) {
+            return null;
+        }
     }
 
     public interface Callback {
-        void onSuccess(String value);
+        void onSuccess(int purpose, Cipher cipher);
 
         void onFailure(CharSequence helpString);
     }

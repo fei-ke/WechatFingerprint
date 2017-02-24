@@ -13,7 +13,7 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file(project.STORE_FILE)
+            storeFile file(project.STORE_FILE_PATH)
             storePassword project.STORE_PASSWORD
             keyAlias project.KEY_ALIAS
             keyPassword project.KEY_PASSWORD

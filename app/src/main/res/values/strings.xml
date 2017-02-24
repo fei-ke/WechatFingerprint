@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">WechatFingerprint</string>
-    <string name="xposedDescription">add fingerprint support for WechatPay</string>
+    <string name="xposedDescription">Add fingerprint support for WechatPay</string>
     <string name="auth_success">Authenticate Success</string>
     <string name="fp_no_match">No Match</string>
+    <string name="set_psw_success">Set Success</string>
+    <string name="pwd_input_hint">input pay password first then input fingerprint</string>
 </resources>
