@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<merge
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -11,28 +12,29 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="30dp"
-        android:background="#F9F9F9"
+        android:background="#F5F5F5"
+        android:clickable="true"
         >
 
         <TextView
             android:id="@+id/tv_hint"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/ic_fp"
+            android:layout_below="@+id/img_icon"
             android:layout_centerInParent="true"
-            android:layout_marginTop="8dp"
-            android:textColor="@android:color/holo_red_light"
+            android:layout_margin="8dp"
+            android:gravity="center"
+            android:textColor="@color/color_fp_normal"
             tools:text="information"
             />
 
         <ImageView
-            android:id="@+id/ic_fp"
+            android:id="@+id/img_icon"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
-            android:layout_gravity="center"
+            android:layout_centerInParent="true"
             android:src="@drawable/ic_fp"
+            android:tint="@color/color_fp_normal"
             />
     </RelativeLayout>
 
@@ -41,4 +43,4 @@
         android:layout_width="match_parent"
         android:layout_height="30dp"
         />
-</FrameLayout>
+</merge>

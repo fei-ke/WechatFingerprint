@@ -13,6 +13,12 @@
     tools:context="com.fei_ke.wechatfingerprint.MainActivity"
     >
 
+    <com.fei_ke.wechatfingerprint.FingerPrintLayout
+        android:id="@+id/layout_fingerprint"
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        />
+
     <Button
         android:id="@+id/buttonSetPassword"
         android:layout_width="wrap_content"
@@ -27,12 +33,5 @@
         android:text="auth"
         />
 
-    <TextView
-        android:id="@+id/textViewInfo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="Hello World!"
-        />
 
 </LinearLayout>

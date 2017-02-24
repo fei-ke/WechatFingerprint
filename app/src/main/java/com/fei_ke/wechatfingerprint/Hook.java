@@ -3,15 +3,9 @@ package com.fei_ke.wechatfingerprint;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
-import android.transition.Slide;
-import android.transition.TransitionManager;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
@@ -24,11 +18,13 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
  */
 
 public class Hook implements IXposedHookLoadPackage {
+    private static final String WECHAT_PACKAGE_NAME = "com.tencent.mm";
+
     private FingerPrintHelper mFingerPrintHelper;
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if (lpparam.packageName.equals("com.tencent.mm")) {
+        if (lpparam.packageName.equals(WECHAT_PACKAGE_NAME)) {
             hook(lpparam);
         }
     }
@@ -42,34 +38,20 @@ public class Hook implements IXposedHookLoadPackage {
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 try {
                     final Dialog dialog = (Dialog) param.thisObject;
-                    int identifier = dialog.getContext().getResources().getIdentifier("a1b", "id", "com.tencent.mm");
+                    int identifier = dialog.getContext().getResources().getIdentifier("a1b", "id", WECHAT_PACKAGE_NAME);
                     final View layoutKeyboard = dialog.getWindow().findViewById(identifier);
 
-                    ViewGroup viewGroup = (ViewGroup) layoutKeyboard.getParent();
-                    viewGroup.removeView(layoutKeyboard);
+                    ViewGroup container = (ViewGroup) layoutKeyboard.getParent();
+                    container.removeView(layoutKeyboard);
 
-                    Context thisContext = dialog.getContext().createPackageContext("com.fei_ke.wechatfingerprint", Context.CONTEXT_IGNORE_SECURITY);
-                    final FrameLayout rootLayout = (FrameLayout) View.inflate(thisContext, R.layout.layout_fingerprint, null);
-                    rootLayout.addView(layoutKeyboard, 0);
+                    Context remoteContext = dialog.getContext().createPackageContext(BuildConfig.APPLICATION_ID, Context.CONTEXT_IGNORE_SECURITY);
+                    final FingerPrintLayout fingerPrintLayout = new FingerPrintLayout(remoteContext);
+                    fingerPrintLayout.addView(layoutKeyboard, 0);
 
-                    viewGroup.addView(rootLayout);
-                    final View layoutFingerprint = rootLayout.findViewById(R.id.layout_fingerprint);
-                    final TextView textViewHint = (TextView) rootLayout.findViewById(R.id.tv_hint);
-                    final ImageView imageView = (ImageView) rootLayout.findViewById(R.id.ic_fp);
+                    container.addView(fingerPrintLayout);
 
-                    rootLayout.findViewById(R.id.view_header).setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            TransitionManager.beginDelayedTransition(rootLayout, new Slide());
-                            if (layoutFingerprint.getVisibility() != View.VISIBLE) {
-                                layoutFingerprint.setVisibility(View.VISIBLE);
-                            } else {
-                                layoutFingerprint.setVisibility(View.GONE);
-                            }
-                        }
-                    });
 
-                    int idPwdEditText = dialog.getContext().getResources().getIdentifier("b6", "id", "com.tencent.mm");
+                    int idPwdEditText = dialog.getContext().getResources().getIdentifier("b6", "id", WECHAT_PACKAGE_NAME);
                     final EditText editText = (EditText) dialog.getWindow().findViewById(idPwdEditText);
 
                     mFingerPrintHelper = new FingerPrintHelper(dialog.getContext());
@@ -78,25 +60,15 @@ public class Hook implements IXposedHookLoadPackage {
                         @Override
                         public void onSuccess(String value) {
                             editText.setText(value);
-                            imageView.setImageResource(R.drawable.ic_fingerprint_success);
-                            textViewHint.setText("success");
+                            fingerPrintLayout.authSuccess();
                         }
 
                         @Override
                         public void onFailure(CharSequence helpString) {
-                            imageView.setImageResource(R.drawable.ic_fingerprint_error);
-                            textViewHint.setText(helpString);
-
-                            //reset
-                            textViewHint.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    imageView.setImageResource(R.drawable.ic_fp);
-                                    textViewHint.setText(null);
-                                }
-                            }, 1000);
+                            fingerPrintLayout.authFailure(helpString);
                         }
                     });
+
                     mFingerPrintHelper.startAuthenticate();
 
                 } catch (Throwable t) {

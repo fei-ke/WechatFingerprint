@@ -148,7 +148,7 @@ public class FingerPrintHelper extends FingerprintManager.AuthenticationCallback
     public void onAuthenticationFailed() {
         super.onAuthenticationFailed();
 
-        if (mCallback != null) mCallback.onFailure("error");
+        if (mCallback != null) mCallback.onFailure("No Match");
 
         Log.d(TAG, "onAuthenticationFailed() called");
     }
