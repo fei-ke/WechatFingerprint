@@ -7,7 +7,6 @@ import android.hardware.fingerprint.FingerprintManager;
 import android.os.CancellationSignal;
 import android.text.TextUtils;
 import android.util.Base64;
-import android.widget.Toast;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -17,7 +16,7 @@ import javax.crypto.IllegalBlockSizeException;
  * Created by fei on 17/2/24.
  */
 
-public class FingerPrintHelper extends FingerprintManager.AuthenticationCallback {
+public class FingerPrintHelper extends FingerprintManager.AuthenticationCallback implements FingerPrintContract.Present {
     private static final String TAG = "FingerPrintHelper";
 
     public static final int ENCRYPT_MODE = Cipher.ENCRYPT_MODE;
@@ -34,10 +33,14 @@ public class FingerPrintHelper extends FingerprintManager.AuthenticationCallback
 
     private Context mContext;
 
-    public FingerPrintHelper(Context context) {
+    private FingerPrintContract.View mFingerPrintView;
+
+    public FingerPrintHelper(Context context, FingerPrintContract.View fingerPrintView) {
         super();
 
-        mContext = context;
+        this.mContext = context;
+        this.mFingerPrintView = fingerPrintView;
+        fingerPrintView.setPresent(this);
 
         mLocalAndroidKeyStore = new LocalAndroidKeyStore();
         mLocalSharedPreference = new LocalSharedPreference(context);
@@ -47,6 +50,7 @@ public class FingerPrintHelper extends FingerprintManager.AuthenticationCallback
         }
 
         mFingerprintManager = context.getSystemService(FingerprintManager.class);
+
     }
 
     public void setPurpose(int purpose) {
@@ -57,20 +61,32 @@ public class FingerPrintHelper extends FingerprintManager.AuthenticationCallback
         mCallback = callback;
     }
 
-    public void startAuthenticate() {
+    public synchronized void startAuthenticate() {
+        if (mCancellationSignal != null) {
+            return;
+        }
         String IV = mLocalSharedPreference.getData(LocalSharedPreference.KEY_IV);
 
         if (TextUtils.isEmpty(IV)) {
             mPurpose = ENCRYPT_MODE;
         }
 
-        mCancellationSignal = new CancellationSignal();
         if (mContext.checkSelfPermission(Manifest.permission.USE_FINGERPRINT) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(mContext, "need permission", Toast.LENGTH_SHORT).show();
+            mFingerPrintView.showError(R.string.need_fingerprint_permission);
             return;
         }
 
+        if (!mFingerprintManager.isHardwareDetected()) {
+            mFingerPrintView.showError(R.string.hardware_not_supported);
+            return;
+        }
 
+        if (!mFingerprintManager.hasEnrolledFingerprints()) {
+            mFingerPrintView.showError(R.string.register_fingerprint_first);
+            return;
+        }
+
+        mCancellationSignal = new CancellationSignal();
         mFingerprintManager.authenticate(
                 mLocalAndroidKeyStore.getCryptoObject(mPurpose, Base64.decode(IV, Base64.URL_SAFE)),
                 mCancellationSignal,
@@ -80,7 +96,7 @@ public class FingerPrintHelper extends FingerprintManager.AuthenticationCallback
     }
 
 
-    public void stopAuthenticate() {
+    public synchronized void stopAuthenticate() {
         if (mCancellationSignal != null) {
             mCancellationSignal.cancel();
             mCancellationSignal = null;
@@ -89,6 +105,11 @@ public class FingerPrintHelper extends FingerprintManager.AuthenticationCallback
 
     @Override
     public void onAuthenticationError(int errorCode, CharSequence errString) {
+        if (errorCode == FingerprintManager.FINGERPRINT_ERROR_CANCELED) {
+            return;
+        }
+        mFingerPrintView.showError(errString);
+
         if (mCallback != null) {
             mCallback.onFailure(errString);
         }
@@ -96,6 +117,8 @@ public class FingerPrintHelper extends FingerprintManager.AuthenticationCallback
 
     @Override
     public void onAuthenticationHelp(int helpCode, CharSequence helpString) {
+        mFingerPrintView.showError(helpString);
+
         if (mCallback != null) {
             mCallback.onFailure(helpString);
         }
@@ -103,6 +126,8 @@ public class FingerPrintHelper extends FingerprintManager.AuthenticationCallback
 
     @Override
     public void onAuthenticationSucceeded(FingerprintManager.AuthenticationResult result) {
+        mFingerPrintView.showSuccess();
+
         if (mCallback != null) {
             mCallback.onSuccess(mPurpose, result.getCryptoObject().getCipher());
         }
@@ -110,7 +135,9 @@ public class FingerPrintHelper extends FingerprintManager.AuthenticationCallback
 
     @Override
     public void onAuthenticationFailed() {
+        mFingerPrintView.showError(R.string.fp_no_match);
         if (mCallback != null) {
+
             mCallback.onFailure("No Match");
         }
     }

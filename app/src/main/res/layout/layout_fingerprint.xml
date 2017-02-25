@@ -6,13 +6,13 @@
     android:orientation="vertical"
     >
 
+
     <RelativeLayout
         android:id="@+id/layout_fingerprint"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="30dp"
         android:background="#F5F5F5"
-        android:clickable="true"
         >
 
         <TextView
@@ -41,5 +41,11 @@
         android:id="@+id/view_header"
         android:layout_width="match_parent"
         android:layout_height="30dp"
+        />
+
+    <FrameLayout
+        android:id="@+id/gesture_detect_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         />
 </merge>

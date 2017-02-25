@@ -34,12 +34,6 @@ public class SetPasswordFragment extends DialogFragment {
     private Context  mContext;
 
     @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        mFingerPrintHelper = new FingerPrintHelper(context);
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         try {
             mContext = getContext().createPackageContext(BuildConfig.APPLICATION_ID, Context.CONTEXT_IGNORE_SECURITY);
@@ -48,6 +42,7 @@ public class SetPasswordFragment extends DialogFragment {
             FrameLayout rootLayout = new FrameLayout(mContext);
             rootLayout.setPadding(0, (int) (density * 20), 0, 0);
             mFingerPrintLayout = new FingerPrintLayout(mContext);
+            mFingerPrintLayout.disableSwitchVisibility();
             LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT,
                     (int) (density * 200));
             rootLayout.addView(mFingerPrintLayout, params);
@@ -61,6 +56,8 @@ public class SetPasswordFragment extends DialogFragment {
             mEditText.setInputType(EditorInfo.TYPE_CLASS_NUMBER | EditorInfo.TYPE_NUMBER_VARIATION_PASSWORD);
             mEditText.setGravity(Gravity.CENTER);
             rootLayout.addView(mEditText, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+
+            mFingerPrintHelper = new FingerPrintHelper(getContext(), mFingerPrintLayout);
 
             return rootLayout;
         } catch (PackageManager.NameNotFoundException e) {
@@ -100,8 +97,6 @@ public class SetPasswordFragment extends DialogFragment {
                 //加密保存
                 mFingerPrintHelper.encrypt(cipher, password);
 
-                mFingerPrintLayout.authSuccess();
-
                 Toast.makeText(mContext, R.string.set_psw_success, Toast.LENGTH_SHORT).show();
 
                 //delay dismiss
@@ -116,7 +111,7 @@ public class SetPasswordFragment extends DialogFragment {
 
             @Override
             public void onFailure(CharSequence helpString) {
-                mFingerPrintLayout.authFailure(helpString);
+
             }
         });
     }

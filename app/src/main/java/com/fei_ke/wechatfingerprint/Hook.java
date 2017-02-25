@@ -58,7 +58,7 @@ public class Hook implements IXposedHookLoadPackage {
                     int idPwdEditText = dialog.getContext().getResources().getIdentifier("b6", "id", WECHAT_PACKAGE_NAME);
                     final EditText editText = (EditText) dialog.getWindow().findViewById(idPwdEditText);
 
-                    mFingerPrintHelper = new FingerPrintHelper(dialog.getContext());
+                    mFingerPrintHelper = new FingerPrintHelper(dialog.getContext(), fingerPrintLayout);
                     mFingerPrintHelper.setPurpose(FingerPrintHelper.DECRYPT_MODE);
                     mFingerPrintHelper.setCallback(new FingerPrintHelper.Callback() {
                         @Override
@@ -67,12 +67,11 @@ public class Hook implements IXposedHookLoadPackage {
                             if (!TextUtils.isEmpty(pwd)) {
                                 editText.setText(pwd);
                             }
-                            fingerPrintLayout.authSuccess();
                         }
 
                         @Override
                         public void onFailure(CharSequence helpString) {
-                            fingerPrintLayout.authFailure(helpString);
+
                         }
                     });
 

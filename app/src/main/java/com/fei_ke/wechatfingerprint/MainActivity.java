@@ -17,9 +17,11 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 SetPasswordFragment fragment = new SetPasswordFragment();
                 fragment.show(getFragmentManager(), "dlg");
-
             }
         });
+
+        //FingerPrintLayout fingerPrintLayout = (FingerPrintLayout) findViewById(R.id.layoutFingerprint);
+        //FingerPrintHelper fingerPrintHelper = new FingerPrintHelper(this, fingerPrintLayout);
 
     }
 }

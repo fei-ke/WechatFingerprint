@@ -5,4 +5,7 @@
     <string name="fp_no_match">无匹配</string>
     <string name="set_psw_success">设置成功</string>
     <string name="pwd_input_hint">先输入支付密码再录入指纹</string>
+    <string name="need_fingerprint_permission">需要权限</string>
+    <string name="hardware_not_supported">设备不支持指纹</string>
+    <string name="register_fingerprint_first">请先添加指纹</string>
 </resources>

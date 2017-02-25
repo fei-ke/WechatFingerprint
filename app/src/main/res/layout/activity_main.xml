@@ -19,4 +19,10 @@
         android:text="在微信-我-钱包-菜单-支付管理-Xposed 指纹支付，先输入密码再录入指纹，支付时即可使用指纹支付"
         />
 
+    <!--<com.fei_ke.wechatfingerprint.FingerPrintLayout-->
+        <!--android:id="@+id/layoutFingerprint"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="200dp"-->
+        <!--android:background="#FF0000"-->
+        <!--/>-->
 </LinearLayout>
