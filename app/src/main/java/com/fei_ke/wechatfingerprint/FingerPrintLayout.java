@@ -24,14 +24,15 @@ public class FingerPrintLayout extends FrameLayout implements FingerPrintContrac
     private ImageView mImageView;
     private View      mLayoutFingerprint;
     private TextView  mTextViewHint;
-    private View      mGestureDetectView;
+    private View      mViewSwitchVisibility;
 
     private int colorError, colorSuccess, colorNormal;
 
     private GestureDetector mGestureDetector;
 
     private FingerPrintContract.Present mPresent;
-    private View                        mViewSwitchVisibility;
+
+    private boolean canHide = true;
 
     public FingerPrintLayout(Context context) {
         super(context);
@@ -60,7 +61,6 @@ public class FingerPrintLayout extends FrameLayout implements FingerPrintContrac
         mLayoutFingerprint = findViewById(R.id.layout_fingerprint);
         mTextViewHint = (TextView) findViewById(R.id.tv_hint);
         mImageView = (ImageView) findViewById(R.id.img_icon);
-        mGestureDetectView = findViewById(R.id.gesture_detect_view);
         mViewSwitchVisibility = findViewById(R.id.view_header);
 
         colorNormal = getResources().getColor(R.color.color_fp_normal);
@@ -92,19 +92,28 @@ public class FingerPrintLayout extends FrameLayout implements FingerPrintContrac
         });
 
 
-        mGestureDetectView.setOnTouchListener(new OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                mGestureDetector.onTouchEvent(event);
-                return true;
-            }
-        });
         reset();
     }
 
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (canHide && mGestureDetector.onTouchEvent(ev)) {
+            ev.setAction(MotionEvent.ACTION_CANCEL);
+            return super.dispatchTouchEvent(ev);
+        }
+        super.dispatchTouchEvent(ev);
+        return true;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+
+        return super.onTouchEvent(event);
+    }
+
     public void disableSwitchVisibility() {
-        mGestureDetectView.setOnTouchListener(null);
         mViewSwitchVisibility.setOnClickListener(null);
+        canHide = false;
     }
 
     public void hideFingerPrintLayout() {
@@ -120,26 +129,6 @@ public class FingerPrintLayout extends FrameLayout implements FingerPrintContrac
 
         if (mPresent != null) mPresent.startAuthenticate();
     }
-
-    //public void authSuccess() {
-    //    mImageView.getDrawable().setTint(colorSuccess);
-    //    mTextViewHint.setText(R.string.auth_success);
-    //    mTextViewHint.setTextColor(colorSuccess);
-    //}
-    //
-    //public void authFailure(CharSequence hint) {
-    //    mImageView.getDrawable().setTint(colorError);
-    //    mTextViewHint.setText(hint);
-    //    mTextViewHint.setTextColor(colorError);
-    //
-    //    //reset
-    //    postDelayed(new Runnable() {
-    //        @Override
-    //        public void run() {
-    //            reset();
-    //        }
-    //    }, 2000);
-    //}
 
     private void reset() {
         mImageView.getDrawable().setTint(colorNormal);
