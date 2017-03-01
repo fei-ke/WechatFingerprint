@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
@@ -16,13 +17,23 @@
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="在微信-我-钱包-菜单-支付管理-Xposed 指纹支付，先输入密码再录入指纹，支付时即可使用指纹支付"
+        android:lineSpacingMultiplier="1.2"
+        android:text="@string/xposed_mode_setting"
+        />
+
+    <Button
+        android:id="@+id/buttonAccessibility"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:lineSpacingMultiplier="1.2"
+        android:text="@string/none_xposed_mode_setting"
         />
 
     <!--<com.fei_ke.wechatfingerprint.FingerPrintLayout-->
-        <!--android:id="@+id/layoutFingerprint"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="200dp"-->
-        <!--android:background="#FF0000"-->
-        <!--/>-->
+    <!--android:id="@+id/layoutFingerprint"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="200dp"-->
+    <!--android:background="#FF0000"-->
+    <!--/>-->
 </LinearLayout>

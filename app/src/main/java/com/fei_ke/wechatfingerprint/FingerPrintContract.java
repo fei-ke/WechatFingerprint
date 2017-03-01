@@ -15,6 +15,8 @@ public interface FingerPrintContract {
         void showSuccess();
 
         void setPresent(Present present);
+
+        void reset();
     }
 
     interface Present {

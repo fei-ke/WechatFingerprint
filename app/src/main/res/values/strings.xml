@@ -8,4 +8,8 @@
     <string name="need_fingerprint_permission">Need Permission</string>
     <string name="hardware_not_supported">Device not supported FingerPrint</string>
     <string name="register_fingerprint_first">Register at least one fingerprint</string>
+    <string name="accessibility_description">Detect Wechat pay window</string>
+    <string name="none_xposed_mode_setting">None Xposed setting</string>
+    <string name="xposed_mode_setting">Xposed mode：\ngo Wechat-I-Wallet-menu-Password Management-Xposed 指纹支付, Input pay password first then input fingerprint, Done!</string>
+    <string name="set_password">set password</string>
 </resources>

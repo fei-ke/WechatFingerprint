@@ -34,7 +34,7 @@ public class Hook implements IXposedHookLoadPackage {
     }
 
     private void hook(XC_LoadPackage.LoadPackageParam lpparam) {
-        Class clazzPswDialog = XposedHelpers.findClass(" com.tencent.mm.plugin.wallet_core.ui.l", lpparam.classLoader);
+        Class clazzPswDialog = XposedHelpers.findClass("com.tencent.mm.plugin.wallet_core.ui.l", lpparam.classLoader);
 
         XposedHelpers.findAndHookMethod(clazzPswDialog, "onCreate", Bundle.class, new XC_MethodHook() {
 

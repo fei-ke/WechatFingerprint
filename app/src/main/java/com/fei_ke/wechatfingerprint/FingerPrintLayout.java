@@ -130,7 +130,8 @@ public class FingerPrintLayout extends FrameLayout implements FingerPrintContrac
         if (mPresent != null) mPresent.startAuthenticate();
     }
 
-    private void reset() {
+    @Override
+    public void reset() {
         mImageView.getDrawable().setTint(colorNormal);
         mTextViewHint.setTextColor(colorNormal);
         mTextViewHint.setText(null);

@@ -93,6 +93,8 @@ public class FingerPrintHelper extends FingerprintManager.AuthenticationCallback
                 0,
                 this,
                 null);
+
+        mFingerPrintView.reset();
     }
 
 
