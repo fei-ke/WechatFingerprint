@@ -5,12 +5,16 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.CancellationSignal;
+import android.security.keystore.KeyProperties;
 import android.text.TextUtils;
 import android.util.Base64;
+
+import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 /**
  * Created by fei on 17/2/24.
@@ -86,9 +90,28 @@ public class FingerPrintHelper extends FingerprintManager.AuthenticationCallback
             return;
         }
 
+        Cipher cipher = null;
+
+        try {
+            cipher = Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/" + KeyProperties.BLOCK_MODE_CBC
+                    + "/" + KeyProperties.ENCRYPTION_PADDING_PKCS7);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            //ensure not happen
+            e.printStackTrace();
+        }
+
+        if (!mLocalAndroidKeyStore.initCipher(cipher, mPurpose, Base64.decode(IV, Base64.URL_SAFE))) {
+            mFingerPrintView.showError(R.string.need_set_password);
+            if (mPurpose == ENCRYPT_MODE) {
+                mLocalAndroidKeyStore.generateKey(LocalAndroidKeyStore.KEY_NAME);
+                startAuthenticate();
+            }
+            return;
+        }
+
         mCancellationSignal = new CancellationSignal();
         mFingerprintManager.authenticate(
-                mLocalAndroidKeyStore.getCryptoObject(mPurpose, Base64.decode(IV, Base64.URL_SAFE)),
+                new FingerprintManager.CryptoObject(cipher),
                 mCancellationSignal,
                 0,
                 this,

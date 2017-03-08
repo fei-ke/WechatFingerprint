@@ -4,8 +4,9 @@ package com.fei_ke.wechatfingerprint;
  * Created by fei on 2017/2/23.
  */
 
-import android.hardware.fingerprint.FingerprintManager;
+import android.os.Build;
 import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyPermanentlyInvalidatedException;
 import android.security.keystore.KeyProperties;
 
 import java.security.KeyStore;
@@ -36,6 +37,10 @@ public class LocalAndroidKeyStore {
             final int purpose = KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_ENCRYPT;
             final KeyGenParameterSpec.Builder builder = new KeyGenParameterSpec.Builder(keyAlias, purpose);
             builder.setUserAuthenticationRequired(true);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                builder.setInvalidatedByBiometricEnrollment(true);
+            }
             builder.setBlockModes(KeyProperties.BLOCK_MODE_CBC);
             builder.setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7);
             generator.init(builder.build());
@@ -45,24 +50,20 @@ public class LocalAndroidKeyStore {
         }
     }
 
-    public FingerprintManager.CryptoObject getCryptoObject(int purpose, byte[] IV) {
+    public boolean initCipher(Cipher cipher, int purpose, byte[] IV) {
         try {
             mStore.load(null);
             final SecretKey key = (SecretKey) mStore.getKey(KEY_NAME, null);
-            if (key == null) {
-                return null;
-            }
-            final Cipher cipher = Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/" + KeyProperties.BLOCK_MODE_CBC
-                    + "/" + KeyProperties.ENCRYPTION_PADDING_PKCS7);
             if (purpose == KeyProperties.PURPOSE_ENCRYPT) {
                 cipher.init(purpose, key);
             } else {
                 cipher.init(purpose, key, new IvParameterSpec(IV));
             }
-            return new FingerprintManager.CryptoObject(cipher);
+            return true;
+        } catch (KeyPermanentlyInvalidatedException e) {
+            return false;
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            throw new RuntimeException("Failed to init Cipher", e);
         }
     }
 }
