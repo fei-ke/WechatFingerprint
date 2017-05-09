@@ -34,7 +34,9 @@ public class Hook implements IXposedHookLoadPackage {
     }
 
     private void hook(XC_LoadPackage.LoadPackageParam lpparam) {
-        Class clazzPswDialog = XposedHelpers.findClass(" com.tencent.mm.plugin.wallet_core.ui.l", lpparam.classLoader);
+        final Class clazzPswDialog = XposedHelpers.findClass("com.tencent.mm.plugin.wallet_core.ui.l", lpparam.classLoader);
+        //final Class clazzKeyboardWindow = XposedHelpers.findClass("com.tenpay.android.wechat.MyKeyboardWindow", lpparam.classLoader);
+        //final Class clazzEditText = XposedHelpers.findClass("com.tenpay.android.wechat.TenpaySecureEditText", lpparam.classLoader);
 
         XposedHelpers.findAndHookMethod(clazzPswDialog, "onCreate", Bundle.class, new XC_MethodHook() {
 
@@ -42,8 +44,9 @@ public class Hook implements IXposedHookLoadPackage {
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 try {
                     final Dialog dialog = (Dialog) param.thisObject;
-                    int identifier = dialog.getContext().getResources().getIdentifier("a1b", "id", WECHAT_PACKAGE_NAME);
-                    final View layoutKeyboard = dialog.getWindow().findViewById(identifier);
+                    final View layoutKeyboard = (View) Util.findViewByClass(dialog.getWindow().getDecorView(),
+                            "com.tenpay.android.wechat.MyKeyboardWindow")
+                            .getParent();
 
                     ViewGroup container = (ViewGroup) layoutKeyboard.getParent();
                     container.removeView(layoutKeyboard);
@@ -55,8 +58,7 @@ public class Hook implements IXposedHookLoadPackage {
                     container.addView(fingerPrintLayout);
 
 
-                    int idPwdEditText = dialog.getContext().getResources().getIdentifier("b6", "id", WECHAT_PACKAGE_NAME);
-                    final EditText editText = (EditText) dialog.getWindow().findViewById(idPwdEditText);
+                    final EditText editText = (EditText) Util.findViewByClass(container, "com.tenpay.android.wechat.TenpaySecureEditText");
 
                     mFingerPrintHelper = new FingerPrintHelper(dialog.getContext(), fingerPrintLayout);
                     mFingerPrintHelper.setPurpose(FingerPrintHelper.DECRYPT_MODE);
