@@ -1,7 +1,11 @@
 WechatFingerprint
 ================
 
+### 微信指纹支付 Xposed 插件，自适配微信版本
 Add fingerprint payment for wechat
+
+[下载](https://github.com/fei-ke/WechatFingerprint/releases/download/v1.3/wechat_fingerprint.apk)
+
 
 License
 -------
