@@ -1,24 +1,27 @@
 package com.fei_ke.wechatfingerprint;
 
 import android.app.Activity;
+import android.app.Application;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Message;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-
-import javax.crypto.Cipher;
-
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
+import javax.crypto.Cipher;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by fei on 2017/2/23.
@@ -27,82 +30,44 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 public class Hook implements IXposedHookLoadPackage {
     private static final String WECHAT_PACKAGE_NAME = "com.tencent.mm";
 
-    private FingerPrintHelper mFingerPrintHelper;
-
     private Class  classAdapter;
     private Field  fieldAdapterInSettingUI;
     private String methodNameOnItemClickInSettingUI;
     private Field  fieldPreferenceKey;
-    private Class  classPswDialog;
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if (lpparam.packageName.equals(WECHAT_PACKAGE_NAME)) {
-            hook(lpparam);
+    public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+        if (lpparam.packageName.equals(WECHAT_PACKAGE_NAME) && lpparam.isFirstApplication && lpparam.processName.equals(lpparam.packageName)) {
+            XposedHelpers.findAndHookMethod(Application.class, "onCreate", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    hook(lpparam);
+                }
+            });
         }
     }
 
     private void hook(XC_LoadPackage.LoadPackageParam lpparam) {
         //find classPswDialog
+        Set<Class> classPswDialog = new HashSet<>();
         Class<?> classTmp = XposedHelpers.findClass("com.tencent.mm.plugin.wallet.balance.ui.WalletBalanceFetchPwdInputUI", lpparam.classLoader);
         for (Field field : classTmp.getDeclaredFields()) {
-            if (field.getType() != String.class) {
-                classPswDialog = field.getType();
+            if (field.getType() != String.class && !field.getType().isPrimitive()) {
+                classPswDialog.add(field.getType());
+                break;
+            }
+        }
+        classTmp = XposedHelpers.findClass("com.tencent.mm.plugin.wallet.pay.ui.WalletLoanRepaymentUI", lpparam.classLoader);
+        for (Field field : classTmp.getDeclaredFields()) {
+            if (field.getType() != String.class && !field.getType().isPrimitive()) {
+                classPswDialog.add(field.getType());
+                break;
             }
         }
 
-        XposedHelpers.findAndHookMethod(classPswDialog, "onCreate", Bundle.class, new XC_MethodHook() {
-
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                final Dialog dialog = (Dialog) param.thisObject;
-                final View layoutKeyboard = (View) Util.findViewByClass(dialog.getWindow().getDecorView(), "com.tenpay.android.wechat.MyKeyboardWindow")
-                        .getParent();
-
-                ViewGroup container = (ViewGroup) layoutKeyboard.getParent();
-                container.removeView(layoutKeyboard);
-
-                Context remoteContext = dialog.getContext().createPackageContext(BuildConfig.APPLICATION_ID, Context.CONTEXT_IGNORE_SECURITY);
-                final FingerPrintLayout fingerPrintLayout = new FingerPrintLayout(remoteContext);
-                fingerPrintLayout.addView(layoutKeyboard, 0);
-
-                container.addView(fingerPrintLayout);
-
-
-                final EditText editText = (EditText) Util.findViewByClass(container, "com.tenpay.android.wechat.TenpaySecureEditText");
-
-                mFingerPrintHelper = new FingerPrintHelper(dialog.getContext(), fingerPrintLayout);
-                mFingerPrintHelper.setPurpose(FingerPrintHelper.DECRYPT_MODE);
-                mFingerPrintHelper.setCallback(new FingerPrintHelper.Callback() {
-                    @Override
-                    public void onSuccess(int purpose, Cipher cipher) {
-                        String pwd = mFingerPrintHelper.decrypt(cipher);
-                        if (!TextUtils.isEmpty(pwd)) {
-                            editText.setText(pwd);
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(CharSequence helpString) {
-
-                    }
-                });
-
-                mFingerPrintHelper.startAuthenticate();
-
-            }
-        });
-
-
-        XposedHelpers.findAndHookMethod(classPswDialog, "dismiss", new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                if (mFingerPrintHelper != null) {
-                    mFingerPrintHelper.stopAuthenticate();
-                    mFingerPrintHelper = null;
-                }
-            }
-        });
+        for (Class c : classPswDialog) {
+            hookPswDialog(c);
+        }
 
         final Class classWalletPasswordSettingUI = XposedHelpers.findClass("com.tencent.mm.plugin.wallet.pwd.ui.WalletPasswordSettingUI", lpparam.classLoader);
         final Class classPreference = XposedHelpers.findClass("com.tencent.mm.ui.base.preference.Preference", lpparam.classLoader);
@@ -167,6 +132,59 @@ public class Hook implements IXposedHookLoadPackage {
                     SetPasswordFragment fragment = new SetPasswordFragment();
                     fragment.show(activity.getFragmentManager(), "dlg");
                 }
+            }
+        });
+    }
+
+    private void hookPswDialog(Class classPswDialog) {
+        XposedHelpers.findAndHookMethod(classPswDialog, "onCreate", Bundle.class, new XC_MethodHook() {
+
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                final Dialog dialog = (Dialog) param.thisObject;
+                final View layoutKeyboard = (View) Util.findViewByClass(dialog.getWindow().getDecorView(), "com.tenpay.android.wechat.MyKeyboardWindow")
+                        .getParent();
+
+                ViewGroup container = (ViewGroup) layoutKeyboard.getParent();
+                container.removeView(layoutKeyboard);
+
+                Context remoteContext = dialog.getContext().createPackageContext(BuildConfig.APPLICATION_ID, Context.CONTEXT_IGNORE_SECURITY);
+                final FingerPrintLayout fingerPrintLayout = new FingerPrintLayout(remoteContext);
+                fingerPrintLayout.addView(layoutKeyboard, 0);
+
+                container.addView(fingerPrintLayout);
+
+                final EditText editText = (EditText) Util.findViewByClass(container, "com.tenpay.android.wechat.TenpaySecureEditText");
+                final FingerPrintHelper fingerPrintHelper = new FingerPrintHelper(dialog.getContext(), fingerPrintLayout);
+                fingerPrintHelper.setPurpose(FingerPrintHelper.DECRYPT_MODE);
+                fingerPrintHelper.setCallback(new FingerPrintHelper.Callback() {
+                    @Override
+                    public void onSuccess(int purpose, Cipher cipher) {
+                        String pwd = fingerPrintHelper.decrypt(cipher);
+                        if (!TextUtils.isEmpty(pwd)) {
+                            editText.setText(pwd);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(CharSequence helpString) {
+
+                    }
+                });
+                final Message dismissMessage = (Message) XposedHelpers.getObjectField(dialog, "mDismissMessage");
+                dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        fingerPrintHelper.stopAuthenticate();
+
+                        if (dismissMessage != null) {
+                            Message.obtain(dismissMessage).sendToTarget();
+                        }
+                    }
+                });
+
+                fingerPrintHelper.startAuthenticate();
+
             }
         });
     }
