@@ -100,7 +100,14 @@ public class FingerPrintHelper extends FingerprintManager.AuthenticationCallback
             e.printStackTrace();
         }
 
-        if (!mLocalAndroidKeyStore.initCipher(cipher, mPurpose, Base64.decode(IV, Base64.URL_SAFE))) {
+        boolean initCipher;
+        try {
+            initCipher = mLocalAndroidKeyStore.initCipher(cipher, mPurpose, Base64.decode(IV, Base64.URL_SAFE));
+        } catch (Exception e) {
+            initCipher = false;
+        }
+
+        if (!initCipher) {
             mFingerPrintView.showError(R.string.need_set_password);
             if (mPurpose == ENCRYPT_MODE) {
                 mLocalAndroidKeyStore.generateKey(LocalAndroidKeyStore.KEY_NAME);

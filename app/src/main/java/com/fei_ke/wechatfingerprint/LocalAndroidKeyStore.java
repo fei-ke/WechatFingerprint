@@ -6,10 +6,16 @@ package com.fei_ke.wechatfingerprint;
 
 import android.os.Build;
 import android.security.keystore.KeyGenParameterSpec;
-import android.security.keystore.KeyPermanentlyInvalidatedException;
 import android.security.keystore.KeyProperties;
 
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -50,20 +56,17 @@ public class LocalAndroidKeyStore {
         }
     }
 
-    public boolean initCipher(Cipher cipher, int purpose, byte[] IV) {
-        try {
-            mStore.load(null);
-            final SecretKey key = (SecretKey) mStore.getKey(KEY_NAME, null);
-            if (purpose == KeyProperties.PURPOSE_ENCRYPT) {
-                cipher.init(purpose, key);
-            } else {
-                cipher.init(purpose, key, new IvParameterSpec(IV));
-            }
-            return true;
-        } catch (KeyPermanentlyInvalidatedException e) {
-            return false;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to init Cipher", e);
+    public boolean initCipher(Cipher cipher, int purpose, byte[] IV)
+            throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, IOException,
+            KeyStoreException, InvalidAlgorithmParameterException, InvalidKeyException {
+
+        mStore.load(null);
+        final SecretKey key = (SecretKey) mStore.getKey(KEY_NAME, null);
+        if (purpose == KeyProperties.PURPOSE_ENCRYPT) {
+            cipher.init(purpose, key);
+        } else {
+            cipher.init(purpose, key, new IvParameterSpec(IV));
         }
+        return true;
     }
 }
